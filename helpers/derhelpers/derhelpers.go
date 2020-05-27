@@ -9,7 +9,9 @@ import (
 	"crypto/x509"
 
 	cferr "github.com/cloudflare/cfssl/errors"
-	"github.com/zhigui-projects/gmsm/sm2"
+	gm_plugins "github.com/zhigui-projects/gm-plugins"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	"github.com/zhigui-projects/gm-plugins/primitive"
 )
 
 // ParsePrivateKeyDER parses a PKCS #1, PKCS #8, or elliptic curve
@@ -21,7 +23,7 @@ func ParsePrivateKeyDER(keyDER []byte) (key crypto.Signer, err error) {
 		if err != nil {
 			generalKey, err = x509.ParseECPrivateKey(keyDER)
 			if err != nil {
-				generalKey, err = sm2.ParseSm2PrivateKey(keyDER)
+				generalKey, err = gm_plugins.GetSmCryptoSuite().ParsePKCS8UnecryptedPrivateKey(keyDER) //ParseSm2PrivateKey(keyDER)
 				if err !=nil {
 					// We don't include the actual error into
 					// the final error. The reason might be
@@ -39,8 +41,8 @@ func ParsePrivateKeyDER(keyDER []byte) (key crypto.Signer, err error) {
 		return generalKey.(*rsa.PrivateKey), nil
 	case *ecdsa.PrivateKey:
 		return generalKey.(*ecdsa.PrivateKey), nil
-	case *sm2.PrivateKey:
-		return generalKey.(*sm2.PrivateKey),nil
+	case *primitive.Sm2PrivateKey:
+		return generalKey.(*primitive.Sm2PrivateKey),nil
 	}
 
 	// should never reach here

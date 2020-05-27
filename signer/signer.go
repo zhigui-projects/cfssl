@@ -21,8 +21,9 @@ import (
 	"github.com/cloudflare/cfssl/csr"
 	cferr "github.com/cloudflare/cfssl/errors"
 	"github.com/cloudflare/cfssl/info"
-	"github.com/zhigui-projects/gmsm/sm2"
-	gmx509 "github.com/zhigui-projects/x509"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
+	"github.com/zhigui-projects/gm-plugins/primitive"
 )
 
 // Subject contains the information that should be used to override the
@@ -160,7 +161,8 @@ func DefaultSigAlgo(priv crypto.Signer) x509.SignatureAlgorithm {
 		default:
 			return x509.ECDSAWithSHA1
 		}
-	case *sm2.PublicKey:
+	case *primitive.Sm2PublicKey:
+
 		return gmx509.SM2WithSM3
 	default:
 		return x509.UnknownSignatureAlgorithm
@@ -172,13 +174,13 @@ func DefaultSigAlgo(priv crypto.Signer) x509.SignatureAlgorithm {
 func ParseCertificateRequest(s Signer, csrBytes []byte) (template *x509.Certificate, err error) {
 	var csrv *x509.CertificateRequest
 	if s.SigAlgo() == gmx509.SM2WithSM3{
-		csrv, err = gmx509.X509(gmx509.SM2).ParseCertificateRequest(csrBytes)
+		csrv, err = gmx509.GetX509SM2().ParseCertificateRequest(csrBytes)
 		if err != nil {
 			err = cferr.Wrap(cferr.CSRError, cferr.ParseFailed, err)
 			return
 		}
 
-		err = gmx509.X509(gmx509.SM2).CheckCertificateRequestSignature(csrv)
+		err = gmx509.GetX509SM2().CheckCertificateRequestSignature(csrv)
 		if err != nil {
 			err = cferr.Wrap(cferr.CSRError, cferr.KeyMismatch, err)
 			return
@@ -241,8 +243,8 @@ func ComputeSKI(template *x509.Certificate) ([]byte, error) {
 	pub := template.PublicKey
 	var encodedPub []byte
 	var err error
-	if _,ok := pub.(*sm2.PublicKey); ok{
-		encodedPub, err = gmx509.X509(gmx509.SM2).MarshalPKIXPublicKey(pub)
+	if _,ok := pub.(*primitive.Sm2PublicKey); ok{
+		encodedPub, err = gmx509.GetX509SM2().MarshalPKIXPublicKey(pub)
 	} else {
 	    encodedPub, err = x509.MarshalPKIXPublicKey(pub)
 	}

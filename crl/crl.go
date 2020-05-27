@@ -15,8 +15,9 @@ import (
 	"github.com/cloudflare/cfssl/certdb"
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/log"
-	"github.com/zhigui-projects/gmsm/sm2"
-	gmx509 "github.com/zhigui-projects/x509"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	"github.com/zhigui-projects/gm-plugins/primitive"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
 )
 
 // NewCRLFromFile takes in a list of serial numbers, one per line, as well as the issuing certificate
@@ -103,8 +104,8 @@ func CreateGenericCRL(certList []pkix.RevokedCertificate, key crypto.Signer, iss
     var crlBytes []byte
     var err error
 
-    if _,ok := key.Public().(*sm2.PublicKey);ok{
-    	crlBytes, err = gmx509.X509(gmx509.SM2).CreateCRL(issuingCert, rand.Reader, key, certList, time.Now(), expiryTime)
+    if _,ok := key.Public().(*primitive.Sm2PublicKey);ok{
+    	crlBytes, err = gmx509.GetX509SM2().CreateCRL(issuingCert, rand.Reader, key, certList, time.Now(), expiryTime)
 	} else {
 	    crlBytes, err = issuingCert.CreateCRL(rand.Reader, key, certList, time.Now(), expiryTime)
 	}

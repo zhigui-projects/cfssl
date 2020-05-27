@@ -10,8 +10,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	 "github.com/hyperledger/fabric-ca/gm"
-	"github.com/zhigui-projects/gmsm/sm3"
+	"github.com/cloudflare/cfssl/log"
+	gm_plugins "github.com/zhigui-projects/gm-plugins"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -75,8 +75,8 @@ func New(key string, ad []byte) (*Standard, error) {
 // Token generates a new authentication token from the request.
 func (p Standard) Token(req []byte) (token []byte, err error) {
 	h := hmac.New(sha256.New, p.key)
-	if gm.IsGM(){
-		h = hmac.New(sm3.New,p.key)
+	if log.IsGM{
+		h = hmac.New(gm_plugins.GetSmCryptoSuite().NewSm3,p.key)
 	}
 	h.Write(req)
 	h.Write(p.ad)

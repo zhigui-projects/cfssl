@@ -21,7 +21,7 @@ import (
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/log"
 	"golang.org/x/crypto/ocsp"
-	gmx509 "github.com/zhigui-projects/x509"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
 )
 
 // revocationReasonCodes is a map between string reason codes
@@ -165,7 +165,7 @@ func (s StandardSigner) Sign(req SignRequest) ([]byte, error) {
 	if bytes.Compare(req.Certificate.RawIssuer, s.issuer.RawSubject) != 0 {
 		return nil, cferr.New(cferr.OCSPError, cferr.IssuerMismatch)
 	}
-	if gmx509.X509(gmx509.SM2).CheckCertSignatureFrom(req.Certificate,s.issuer) !=nil{
+	if gmx509.GetX509SM2().CheckCertSignatureFrom(req.Certificate,s.issuer) !=nil{
 
 		if req.Certificate.CheckSignatureFrom(s.issuer) != nil {
 		return nil, cferr.New(cferr.OCSPError, cferr.IssuerMismatch)

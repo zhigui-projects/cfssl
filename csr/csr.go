@@ -19,8 +19,10 @@ import (
 	cferr "github.com/cloudflare/cfssl/errors"
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/log"
-	"github.com/zhigui-projects/gmsm/sm2"
-	gmx509 "github.com/zhigui-projects/x509"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	"github.com/zhigui-projects/gm-plugins/primitive"
+	gm_plugins "github.com/zhigui-projects/gm-plugins"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
 )
 
 const (
@@ -94,8 +96,10 @@ func (kr *BasicKeyRequest) Generate() (crypto.PrivateKey, error) {
 			return nil, errors.New("invalid curve")
 		}
 		return ecdsa.GenerateKey(curve, rand.Reader)
-	case "gmsm2":
-		return sm2.GenerateKey()
+	case "sm2", "SM2":
+		//2.GenerateKey()
+		return gm_plugins.GetSmCryptoSuite().GenPrivateKey()
+
 	default:
 		return nil, errors.New("invalid algorithm")
 	}
@@ -127,7 +131,7 @@ func (kr *BasicKeyRequest) SigAlgo() x509.SignatureAlgorithm {
 		default:
 			return x509.ECDSAWithSHA1
 		}
-	case "gmsm2":
+	case "sm2", "SM2":
 		return gmx509.SM2WithSM3
 	default:
 		return x509.UnknownSignatureAlgorithm
@@ -227,8 +231,8 @@ func ParseRequest(req *CertificateRequest) (csr, key []byte, err error) {
 			Bytes: key,
 		}
 		key = pem.EncodeToMemory(&block)
-	case *sm2.PrivateKey:
-		key, err = sm2.MarshalSm2PrivateKey(priv,nil)
+	case *primitive.Sm2PrivateKey:
+		key, err = gm_plugins.GetSmCryptoSuite().MarshalSm2PrivateKey(priv,nil)
 		if err != nil {
 			err = cferr.Wrap(cferr.PrivateKeyError, cferr.Unknown, err)
 			return
@@ -374,8 +378,8 @@ func Regenerate(priv crypto.Signer, csr []byte) ([]byte, error) {
 		return nil, errors.New("csr: trailing data in certificate request")
 	}
 	switch  priv.Public().(type) {
-	case *sm2.PublicKey:
-		return gmx509.X509(gmx509.SM2).CreateCertificateRequest(rand.Reader, req, priv)
+	case *primitive.Sm2PublicKey:
+		return gmx509.GetX509SM2().CreateCertificateRequest(rand.Reader, req, priv)
 	}
 	return x509.CreateCertificateRequest(rand.Reader, req, priv)
 }
@@ -410,8 +414,8 @@ func Generate(priv crypto.Signer, req *CertificateRequest) (csr []byte, err erro
 			return
 		}
 	}
-	if _,ok := priv.Public().(*sm2.PublicKey);ok{
-		gmx509.X509(gmx509.SM2).CreateCertificateRequest(rand.Reader, &tpl, priv)
+	if _,ok := priv.Public().(*primitive.Sm2PublicKey);ok{
+		csr, err = gmx509.GetX509SM2().CreateCertificateRequest(rand.Reader, &tpl, priv)
 	} else {
 	    csr, err = x509.CreateCertificateRequest(rand.Reader, &tpl, priv)
 	}

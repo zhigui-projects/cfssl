@@ -17,7 +17,8 @@ import (
 	"github.com/cloudflare/cfssl/log"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/local"
-	"github.com/zhigui-projects/gmsm/sm2"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	"github.com/zhigui-projects/gm-plugins/primitive"
 )
 
 // validator contains the default validation logic for certificate
@@ -194,7 +195,7 @@ func RenewFromSigner(ca *x509.Certificate, priv crypto.Signer) ([]byte, error) {
 	case ca.PublicKeyAlgorithm == x509.ECDSA:
 
 		var ecdsaPublicKey *ecdsa.PublicKey
-		var sm2PublicKey *sm2.PublicKey
+		var sm2PublicKey *primitive.Sm2PublicKey
 
 		switch priv.Public().(type) {
 		case *ecdsa.PublicKey:
@@ -202,9 +203,9 @@ func RenewFromSigner(ca *x509.Certificate, priv crypto.Signer) ([]byte, error) {
 			if ca.PublicKey.(*ecdsa.PublicKey).X.Cmp(ecdsaPublicKey.X) != 0 {
 				return nil, cferr.New(cferr.PrivateKeyError, cferr.KeyMismatch)
 			}
-		case *sm2.PublicKey:
-			sm2PublicKey = priv.Public().(*sm2.PublicKey)
-			if ca.PublicKey.(*sm2.PublicKey).X.Cmp(sm2PublicKey.X) != 0 {
+		case *primitive.Sm2PublicKey:
+			sm2PublicKey = priv.Public().(*primitive.Sm2PublicKey)
+			if ca.PublicKey.(*primitive.Sm2PublicKey).X.Cmp(sm2PublicKey.X) != 0 {
 				return nil, cferr.New(cferr.PrivateKeyError, cferr.KeyMismatch)
 			}
 		default:

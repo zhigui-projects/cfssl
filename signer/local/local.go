@@ -28,7 +28,7 @@ import (
 	"github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
 	"github.com/google/certificate-transparency-go/jsonclient"
-	gmx509 "github.com/zhigui-projects/x509"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
 	"golang.org/x/net/context"
 	"time"
 )
@@ -120,13 +120,13 @@ func (s *Signer) sign(template *x509.Certificate, profile *config.SigningProfile
 		initRoot = true
 	}
     var derBytes []byte
-	if config.IsGM {
-		derBytes, err = gmx509.X509(gmx509.SM2).CreateCertificate(rand.Reader, template, s.ca, template.PublicKey, s.priv)
+	if log.IsGM {
+		derBytes, err = gmx509.GetX509SM2().CreateCertificate(rand.Reader, template, s.ca, template.PublicKey, s.priv)
 		if err != nil {
 			return nil, cferr.Wrap(cferr.CertificateError, cferr.Unknown, err)
 		}
 		if initRoot {
-			s.ca, err = gmx509.X509(gmx509.SM2).ParseCertificate(derBytes)
+			s.ca, err = gmx509.GetX509SM2().ParseCertificate(derBytes)
 			if err != nil {
 				return nil, cferr.Wrap(cferr.CertificateError, cferr.ParseFailed, err)
 			}

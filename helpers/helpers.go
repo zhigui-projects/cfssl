@@ -31,9 +31,10 @@ import (
 	cferr "github.com/cloudflare/cfssl/errors"
 	"github.com/cloudflare/cfssl/helpers/derhelpers"
 	"github.com/cloudflare/cfssl/log"
-	"github.com/zhigui-projects/gmsm/sm2"
+	gmx509 "github.com/zhigui-projects/gm-crypto/x509"
+	//"github.com/zhigui-projects/gmsm/sm2"
+	"github.com/zhigui-projects/gm-plugins/primitive"
 	gmtls "github.com/zhigui-projects/tls"
-	gmx509 "github.com/zhigui-projects/x509"
 	"golang.org/x/crypto/pkcs12"
 )
 
@@ -245,13 +246,13 @@ func ParseCertificatesDER(certsDER []byte, password string) (certs []*x509.Certi
 		certs = make([]*x509.Certificate, 1)
 		pkcs12data, certs[0], err = pkcs12.Decode(certsDER, password)
 		if err != nil {
-			certs, err = x509.ParseCertificates(certsDER)
+			certs, err = gmx509.GetX509().ParseCertificates(certsDER)
+			//if err != nil {
+			//	certs,err = gmx509.GetX509SM2().ParseCertificates(certsDER)
 			if err != nil {
-				certs,err = gmx509.X509(gmx509.SM2).ParseCertificates(certsDER)
-				if err != nil {
-				    return nil, nil, cferr.New(cferr.CertificateError, cferr.DecodeFailed)
+				return nil, nil, cferr.New(cferr.CertificateError, cferr.DecodeFailed)
 				}
-			}
+//			}
 		} else {
 			key = pkcs12data.(crypto.Signer)
 		}
@@ -310,10 +311,10 @@ func ParseOneCertificateFromPEM(certsPEM []byte) ([]*x509.Certificate, []byte, e
 		return nil, rest, nil
 	}
 
-	cert, err := x509.ParseCertificate(block.Bytes)
+	cert, err := gmx509.GetX509().ParseCertificate(block.Bytes)
 	if err != nil {
-		cert,err = gmx509.X509(gmx509.SM2).ParseCertificate(block.Bytes)
-		if err != nil {
+		//cert,err = gmx509.GetX509SM2().ParseCertificate(block.Bytes)
+		//if err != nil {
 			pkcs7data, err := pkcs7.ParsePKCS7(block.Bytes)
 			if err != nil {
 				return nil, rest, err
@@ -326,7 +327,7 @@ func ParseOneCertificateFromPEM(certsPEM []byte) ([]*x509.Certificate, []byte, e
 				return nil, rest, errors.New("PKCS #7 structure contains no certificates")
 			}
 			return certs, rest, nil
-		}
+	//	}
 	}
 	var certs = []*x509.Certificate{cert}
 	return certs, rest, nil
@@ -371,14 +372,14 @@ func appendCertsFromPEM(certPool *x509.CertPool, pemCerts []byte)(ok bool) {
 			continue
 		}
 
-		cert, err := x509.ParseCertificate(block.Bytes)
+		cert, err := gmx509.GetX509().ParseCertificate(block.Bytes)
 
-		if err != nil {
-			cert ,err = gmx509.X509(gmx509.SM2).ParseCertificate(block.Bytes)
+		//if err != nil {
+		//	cert ,err = gmx509.X509(gmx509.SM2).ParseCertificate(block.Bytes)
 			if err != nil {
 		       	continue
 			}
-		}
+		//}
 
 		certPool.AddCert(cert)
 		ok = true
@@ -434,14 +435,14 @@ func ParseCSR(in []byte) (csr *x509.CertificateRequest, rest []byte, err error) 
 
 		csr, err = x509.ParseCertificateRequest(p.Bytes)
 		if err != nil {
-			csr ,err = gmx509.X509(gmx509.SM2).ParseCertificateRequest(p.Bytes)
+			csr ,err = gmx509.GetX509SM2().ParseCertificateRequest(p.Bytes)
 
 
 		}
 	} else {
 		csr, err = x509.ParseCertificateRequest(in)
 		if err != nil {
-			csr ,err = gmx509.X509(gmx509.SM2).ParseCertificateRequest(in)
+			csr ,err = gmx509.GetX509SM2().ParseCertificateRequest(in)
 		}
 	}
 
@@ -451,7 +452,7 @@ func ParseCSR(in []byte) (csr *x509.CertificateRequest, rest []byte, err error) 
 
 	err = csr.CheckSignature()
 	if err != nil{
-	    err = gmx509.X509(gmx509.SM2).CheckCertificateRequestSignature(csr)
+	    err = gmx509.GetX509SM2().CheckCertificateRequestSignature(csr)
 	}
 	if err != nil {
 		return nil, rest, err
@@ -470,7 +471,7 @@ func ParseCSRPEM(csrPEM []byte) (*x509.CertificateRequest, error) {
 	}
 	csrObject, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		csrObject, err = gmx509.X509(gmx509.SM2).ParseCertificateRequest(block.Bytes)
+		csrObject, err = gmx509.GetX509SM2().ParseCertificateRequest(block.Bytes)
 	}
 
 	if err != nil {
@@ -506,7 +507,7 @@ func SignerAlgo(priv crypto.Signer) x509.SignatureAlgorithm {
 		default:
 			return x509.ECDSAWithSHA1
 		}
-	case *sm2.PublicKey:
+	case *primitive.Sm2PublicKey:
 		return gmx509.SM2WithSM3
 	default:
 		return x509.UnknownSignatureAlgorithm
